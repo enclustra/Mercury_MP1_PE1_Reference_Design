@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------------------------------
-# Copyright (c) 2022 by Enclustra GmbH, Switzerland.
+# Copyright (c) 2025 by Enclustra GmbH, Switzerland.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this hardware, software, firmware, and associated documentation files (the
@@ -68,25 +68,22 @@ new_project \
     -adv_options VOLTR:${range}
 
 # Link VHDL top file and set as root
-create_links -library {work} -hdl_source [file join ${local_dir} src ${project_name}_${PL_DDR}.vhd]
-check_hdl -file [file join ${local_dir} src ${project_name}_${PL_DDR}.vhd]
+create_links -library {work} -hdl_source [file join ${local_dir} src ${project_name}.vhd]
+check_hdl -file [file join ${local_dir} src ${project_name}.vhd]
 build_design_hierarchy
-set_root -module ${project_name}_${PL_DDR}::work
+set_root -module ${project_name}::work
 
 # Add IO constraint files
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io Anios_A.pdc]
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io Anios_B.pdc]
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io Clk50.pdc]
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io FMC0.pdc]
-if { $PL_DDR == "DDR4_FPGA"} {
-    create_links -library {work} -io_pdc [file join ${local_dir} constraints io FPGA_DDR4_SDRAM.pdc]
-}
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io GigabitEthernet0.pdc]
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io GigabitEthernet1.pdc]
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io I2C_PL.pdc]
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io LED.pdc]
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io MISC.pdc]
-create_links -library {work} -io_pdc [file join ${local_dir} constraints io PE1_SI5338_CLK3.pdc]
+create_links -library {work} -io_pdc [file join ${local_dir} constraints io OSC.pdc]
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io SDIO_SEL.pdc]
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io TPM.pdc]
 create_links -library {work} -io_pdc [file join ${local_dir} constraints io UART.pdc]
@@ -102,29 +99,11 @@ organize_tool_files -tool {PLACEROUTE} \
     -file [file join ${local_dir} constraints io I2C_PL.pdc] \
     -file [file join ${local_dir} constraints io LED.pdc] \
     -file [file join ${local_dir} constraints io MISC.pdc] \
-    -file [file join ${local_dir} constraints io PE1_SI5338_CLK3.pdc] \
+    -file [file join ${local_dir} constraints io OSC.pdc] \
     -file [file join ${local_dir} constraints io SDIO_SEL.pdc] \
     -file [file join ${local_dir} constraints io TPM.pdc] \
     -file [file join ${local_dir} constraints io UART.pdc] \
-    -module ${project_name}_${PL_DDR}::work -input_type {constraint}
-if { $PL_DDR == "DDR4_FPGA"} {
-    organize_tool_files -tool {PLACEROUTE} \
-        -file [file join ${local_dir} constraints io Anios_A.pdc] \
-        -file [file join ${local_dir} constraints io Anios_B.pdc] \
-        -file [file join ${local_dir} constraints io Clk50.pdc] \
-        -file [file join ${local_dir} constraints io FMC0.pdc] \
-        -file [file join ${local_dir} constraints io GigabitEthernet0.pdc] \
-        -file [file join ${local_dir} constraints io GigabitEthernet1.pdc] \
-        -file [file join ${local_dir} constraints io I2C_PL.pdc] \
-        -file [file join ${local_dir} constraints io LED.pdc] \
-        -file [file join ${local_dir} constraints io MISC.pdc] \
-        -file [file join ${local_dir} constraints io PE1_SI5338_CLK3.pdc] \
-        -file [file join ${local_dir} constraints io SDIO_SEL.pdc] \
-        -file [file join ${local_dir} constraints io TPM.pdc] \
-        -file [file join ${local_dir} constraints io UART.pdc] \
-        -file [file join ${local_dir} constraints io FPGA_DDR4_SDRAM.pdc] \
-        -module ${project_name}_${PL_DDR}::work -input_type {constraint}
-}
+    -module ${project_name}::work -input_type {constraint}
 
 # Add additional HDL cores
 create_links -library {work} -hdl_source [file join ${local_dir} src SdioSel.vhd]
@@ -137,8 +116,6 @@ download_core -vlnv {Actel:DirectCore:CORERESET_PF:*} -location {www.microchip-i
 download_core -vlnv {Microsemi:SgCore:PFSOC_INIT_MONITOR:*} -location {www.microchip-ip.com/repositories/SgCore}
 download_core -vlnv {Actel:DirectCore:CoreAPB3:*} -location {www.microchip-ip.com/repositories/DirectCore}
 download_core -vlnv {Actel:DirectCore:CoreGPIO:*} -location {www.microchip-ip.com/repositories/DirectCore}
-download_core -vlnv {Actel:SystemBuilder:PF_DDR4:*} -location {www.microchip-ip.com/repositories/SgCore}
-download_core -vlnv {Actel:DirectCore:COREAXI4INTERCONNECT:*} -location {www.microchip-ip.com/repositories/DirectCore}
 
 # Source all individual components
 source [file join components Mercury_MP1_CORE_APB3_INTERCONNECT.tcl]
@@ -147,15 +124,6 @@ source [file join components CORERESET.tcl]
 source [file join components INIT_MONITOR.tcl]
 source [file join components Mercury_MP1_GPIO_LED.tcl]
 source [file join components Mercury_MP1_GPIO_UART_SEL.tcl]
-if { $PL_DDR == "DDR4_FPGA"} {
-    source [file join components Mercury_MP1_DDR4_FPGA.tcl]
-}
-if { $PL_DDR == "DDR4_FPGA"} {
-    source [file join components CLOCK_CONDITIONING_CIRCUITRY_PL_DDR.tcl]
-}
-if { $PL_DDR == "DDR4_FPGA"} {
-    source [file join components DDR4_FPGA_CORE_AXI4_INTERCONNECT.tcl]
-}
 build_design_hierarchy
 
 # Source all SmartDesign components
@@ -163,9 +131,6 @@ source [file join components BIBUF_I2C.tcl]
 source [file join components Mercury_MP1_UART_SEL.tcl]
 source [file join components Mercury_MP1_CLOCKS_AND_RESETS.tcl]
 source [file join components SdioSel.tcl]
-if { $PL_DDR == "DDR4_FPGA"} {
-    source [file join components Mercury_MP1_PL_DDR.tcl]
-}
 build_design_hierarchy
 
 # re-create smart design
